@@ -1,0 +1,50 @@
+(load "golomb-forest-eval.lisp")
+
+(defun golomb-forest (&rest args)
+  (if (and (oddp (length args)) (null (car (last args))))
+      (sentinel-change. (golomb-forest-1 0 args))
+      (golomb-forest-1 0 args)))
+
+(defun golomb-forest-1 (size lst)
+  (cond ((null lst) nil)
+	((= size 0) (cons (car lst) (golomb-forest-1 1 (cdr lst))))
+	(t (let ((siz (expt 2 size)))
+	     (if (> siz (length lst))
+		 (cons (tree-1 size lst) nil)
+		 (cons (tree-1 size (subseq lst 0 siz))
+		       (golomb-forest-1 (1+ size) (subseq lst siz))))))))
+
+(defun tree (&rest args)
+  (tree-1 (ceiling (log (length args) 2)) args))
+
+(defun tree-1 (size lst)
+  (let ((si (expt 2 (1- size)))
+	(len (length lst)))
+    (if (= size 1)
+	(if (= len 2)
+	    (cons (car lst) (cadr lst))
+	    lst)
+	(if (>= si len)
+	    (cons (tree-1 (1- size) lst) nil)
+	    (cons (tree-1 (1- size) (subseq lst 0 si))
+		  (tree-1 (1- size) (subseq lst si)))))))
+
+(defun translate (expr)
+  (if (atom expr)
+      expr
+      (apply 'golomb-forest (mapcar 'translate expr))))
+
+(defun conser (x)
+  (if (atom x)
+      (format nil "~A" x)
+      (concatenate 'string 
+		   (format nil "(~A . " (conser (car x))) 
+		   (format nil "~A)" (conser (cdr x))))))
+
+(defun repl (&optional (a nil))
+  (format t "~&> ")
+  (loop (progn (let ((message (read)))
+		 (if (keywordp message)
+		     (return 'quit)
+		     (format t (conser (eval. (translate message) (golomb-forest-1 0 a))))))
+	       (format t "~&> "))))
