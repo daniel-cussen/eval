@@ -1,0 +1,1 @@
+See http://dcussen.posterous.com/lisp-in-lisp-without-linked-lists
